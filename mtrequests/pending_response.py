@@ -20,3 +20,10 @@ class PendingResponse(Response):
 
     def __bool__(self):
         return self.is_valid()
+
+    def __repr__(self):
+        if self.is_not_exception():
+            if self.status_code == 200:
+                return f"<PendingResponse [{self.status_code}]>"
+            return f"<PendingResponse [{self.status_code}]: {self.content}>"
+        return f"<PendingResponse: [{self.exception}]>"
