@@ -16,7 +16,7 @@ class PendingResponse(Response):
         return self.exception is None
 
     def is_valid(self):
-        return self.is_not_exception() and self.status_code == 200
+        return self.is_not_exception() and (200 <= self.status_code <= 299)
 
     def __bool__(self):
         return self.is_valid()

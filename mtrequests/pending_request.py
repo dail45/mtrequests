@@ -1,3 +1,4 @@
+from time import sleep
 from threading import Lock
 
 from requests import Response
@@ -14,7 +15,7 @@ class PendingRequest:
         self.keep_cookies = keep_cookies
         self.parent = parent
 
-    def send(self, repeats=0) -> PendingResponse | None:
+    def send(self, repeats=0, delay=0.1) -> PendingResponse | None:
         with self.lock:
             while repeats >= 0:
                 if self.parent.alive is False:
@@ -28,4 +29,5 @@ class PendingRequest:
                 if rsp.is_valid():
                     return rsp
                 repeats -= 1
+                sleep(delay)
             return rsp
