@@ -1,25 +1,14 @@
-from __future__  import annotations
-from typing import TYPE_CHECKING
-
 import requests
 
 from .request import Request
 
-if TYPE_CHECKING:
-    from mtrequests import PendingPool
-
-
 
 class Session(requests.Session):
-    def __init__(self, pending_pool: PendingPool | None = None):
+    def __init__(self):
         super().__init__()
         self.requests_count = 0
-        self.pending_pool = pending_pool
 
-    def prepare_and_send(self, request: Request, keep_cookie=False, ignore_hooks=False) -> requests.Response:
-        if not ignore_hooks and self.pending_pool and self.pending_pool.on_before_request is not None:
-            self.pending_pool.on_before_request(self, request)
-
+    def prepare_and_send(self, request: Request, keep_cookie=False) -> requests.Response:
         self.requests_count += 1
         if keep_cookie is False:
             self.cookies = requests.sessions.cookiejar_from_dict({})
@@ -35,9 +24,6 @@ class Session(requests.Session):
         send_kwargs = request.sessionarg_send_kwargs
         send_kwargs.update(settings)
         resp = self.send(prep, **send_kwargs)
-
-        if not ignore_hooks and self.pending_pool and self.pending_pool.on_after_request is not None:
-            self.pending_pool.on_after_request(self, resp)
 
         return resp
 
