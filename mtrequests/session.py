@@ -4,7 +4,12 @@ from .request import Request
 
 
 class Session(requests.Session):
+    def __init__(self):
+        super().__init__()
+        self.requests_count = 0
+
     def prepare_and_send(self, request: Request, keep_cookie=False) -> requests.Response:
+        self.requests_count += 1
         if keep_cookie is False:
             self.cookies = requests.sessions.cookiejar_from_dict({})
         prep = self.prepare_request(request)
