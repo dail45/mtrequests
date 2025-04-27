@@ -8,7 +8,7 @@ def readme():
 
 setup(
     name='mtrequests',
-    version='1.4.0',
+    version='1.4.1',
     author='dail45',
     description='threading for requests',
     long_description=readme(),
@@ -23,6 +23,9 @@ setup(
     keywords='requests threading',
     python_requires='>=3.6',
     requires=[
+        "requests"
+    ],
+    install_requires=[
         "requests"
     ]
 )
