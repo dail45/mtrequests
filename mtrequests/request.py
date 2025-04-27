@@ -1,4 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import requests
+
+import mtrequests
+from .lock_stub import LockStub
+
+if TYPE_CHECKING:
+    from . import PendingResponse
 
 
 class Request(requests.Request):
@@ -46,3 +55,6 @@ class Request(requests.Request):
         self.sessionarg_stream = stream
         self.sessionarg_verify = verify
         self.sessionarg_cert = cert
+
+    def send(self, repeats=0, delay=0.1) -> PendingResponse | None:
+        return mtrequests.PendingRequest(mtrequests.Session(), self, LockStub(), None, None).send(repeats, delay)  # noqa

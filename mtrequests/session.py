@@ -1,4 +1,5 @@
 import requests
+from requests import PreparedRequest
 
 from .request import Request
 
@@ -8,11 +9,14 @@ class Session(requests.Session):
         super().__init__()
         self.requests_count = 0
 
+        self._prep: PreparedRequest | None = None
+
     def prepare_and_send(self, request: Request, keep_cookie=False) -> requests.Response:
         self.requests_count += 1
         if keep_cookie is False:
             self.cookies = requests.sessions.cookiejar_from_dict({})
         prep = self.prepare_request(request)
+        self._prep = prep
 
         proxies = request.sessionarg_proxies or {}
 
@@ -68,3 +72,7 @@ class Session(requests.Session):
             verify=verify,
             cert=cert,
         )
+
+    @property
+    def prep(self):
+        return self._prep

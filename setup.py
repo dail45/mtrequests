@@ -8,7 +8,7 @@ def readme():
 
 setup(
     name='mtrequests',
-    version='1.2.0',
+    version='1.3.0',
     author='dail45',
     description='threading for requests',
     long_description=readme(),

@@ -18,14 +18,14 @@ class PendingRequest:
     def send(self, repeats=0, delay=0.1) -> PendingResponse | None:
         with self.lock:
             while repeats >= 0:
-                if self.parent.alive is False:
-                    return
+                if self.parent is not None and self.parent.alive is False:
+                    return None
                 try:
                     response = self.session.prepare_and_send(self.request, self.keep_cookies)
                     rsp = PendingResponse(response, None, self)
                 except Exception as exc:
                     rsp = PendingResponse(None, exc, self)
-                    rsp.request = self
+                    rsp.request = self.session.prep
                 if rsp.is_valid():
                     return rsp
                 repeats -= 1
