@@ -7,7 +7,7 @@ import mtrequests
 from .lock_stub import LockStub
 
 if TYPE_CHECKING:
-    from . import PendingResponse
+    from . import PendingPool, PendingRequest, PendingResponse
 
 
 class Request(requests.Request):
@@ -58,3 +58,6 @@ class Request(requests.Request):
 
     def send(self, repeats=0, delay=0.1) -> PendingResponse | None:
         return mtrequests.PendingRequest(mtrequests.Session(), self, LockStub(), None, None).send(repeats, delay)  # noqa
+
+    def wrap(self, pending_pool: PendingPool) -> PendingRequest | None:
+        return pending_pool.wrap(self, None)
