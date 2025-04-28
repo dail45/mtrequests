@@ -26,4 +26,6 @@ class PendingResponse(Response):
             if self.status_code == 200:
                 return f"<PendingResponse [{self.status_code}]>"
             return f"<PendingResponse [{self.status_code}]: {self.content}>"
-        return f"<PendingResponse: [{type(self.exception)}({self.exception})]>"
+        exception_type = (f"{type(self.exception).__module__}.{type(self.exception).__name__}"
+                          if type(self.exception).__module__ else type(self.exception).__name__)
+        return f"<PendingResponse: [{exception_type}({self.exception})]>"
