@@ -26,4 +26,4 @@ class PendingResponse(Response):
             if self.status_code == 200:
                 return f"<PendingResponse [{self.status_code}]>"
             return f"<PendingResponse [{self.status_code}]: {self.content}>"
-        return f"<PendingResponse: [{self.exception}]>"
+        return f"<PendingResponse: [{type(self.exception)}({self.exception})]>"
