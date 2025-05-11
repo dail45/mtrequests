@@ -5,4 +5,4 @@ from .pending_response import PendingResponse
 from .pool import Pool
 from .pending_pool import PendingPool
 from .request_hook import RequestHook
-from .utils import get, options, head, post, put, patch, delete
+from .utils import get, options, head, post, put, patch, delete, make_request

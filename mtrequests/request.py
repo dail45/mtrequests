@@ -56,8 +56,10 @@ class Request(requests.Request):
         self.sessionarg_verify = verify
         self.sessionarg_cert = cert
 
-    def send(self, repeats=0, delay=0.1) -> PendingResponse | None:
-        return mtrequests.PendingRequest(mtrequests.Session(), self, LockStub(), None, None).send(repeats, delay)  # noqa
+    def send(self, repeats=0, delay=0.1, session: "mtrequests.Session" = None) -> PendingResponse | None:
+        if session is None:
+            session = mtrequests.Session()
+        return mtrequests.PendingRequest(session, self, LockStub(), None, None).send(repeats, delay)  # noqa
 
     def wrap(self, pending_pool: PendingPool) -> PendingRequest | None:
         return pending_pool.wrap(self, None)
