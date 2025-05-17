@@ -7,7 +7,7 @@ import mtrequests
 from .lock_stub import LockStub
 
 if TYPE_CHECKING:
-    from . import PendingPool, PendingRequest, PendingResponse
+    from . import PendingPool, PendingRequest, PendingResponse, RequestHook
 
 
 class Request(requests.Request):
@@ -56,10 +56,11 @@ class Request(requests.Request):
         self.sessionarg_verify = verify
         self.sessionarg_cert = cert
 
-    def send(self, repeats=0, delay=0.1, session: "mtrequests.Session" = None) -> PendingResponse | None:
+    def send(self, repeats=0, delay=0.1, session: "mtrequests.Session" = None, keep_cookies: bool = True) -> PendingResponse | None:
         if session is None:
             session = mtrequests.Session()
-        return mtrequests.PendingRequest(session, self, LockStub(), None, None).send(repeats, delay)  # noqa
+            keep_cookies = False
+        return mtrequests.PendingRequest(session, self, LockStub(), keep_cookies, None).send(repeats, delay)  # noqa
 
-    def wrap(self, pending_pool: PendingPool) -> PendingRequest | None:
-        return pending_pool.wrap(self, None)
+    def wrap(self, pending_pool: PendingPool, request_hook: RequestHook = None) -> PendingRequest | None:
+        return pending_pool.wrap(self, request_hook)

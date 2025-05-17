@@ -2,12 +2,18 @@ from requests import Response
 
 
 class PendingResponse(Response):
-    def __init__(self, response: Response | None, exception: Exception | None, request: "PendingRequest"):
+    def __init__(
+            self,
+            response: Response | None,
+            exception: Exception | None,
+            pending_request: "PendingRequest",
+            elapsed_requests: int = 1
+    ):
         super().__init__()
         if response is not None:
             self.__dict__.update(response.__dict__)
         self.exception = exception
-        self.pending_request = request
+        self.pending_request = pending_request
 
     def is_exception(self):
         return self.exception is not None
