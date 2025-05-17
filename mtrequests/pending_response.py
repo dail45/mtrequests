@@ -14,6 +14,7 @@ class PendingResponse(Response):
             self.__dict__.update(response.__dict__)
         self.exception = exception
         self.pending_request = pending_request
+        self.elapsed_requests = elapsed_requests
 
     def is_exception(self):
         return self.exception is not None
