@@ -6,6 +6,7 @@ from http import cookiejar as cookielib
 
 from .request import Request
 from .prepared_request import PreparedRequest
+from .pending_response import PendingResponse
 
 
 class Session(requests.Session):
@@ -14,6 +15,7 @@ class Session(requests.Session):
         self.requests_count = 0
 
         self._prep: PreparedRequest | None = None
+        self._resp: PendingResponse | None = None
 
     def prepare_and_send(self, request: Request, keep_cookie=False) -> requests.Response:
         self.requests_count += 1
@@ -32,6 +34,7 @@ class Session(requests.Session):
         send_kwargs = request.session_arg_send_kwargs
         send_kwargs.update(settings)
         resp = self.send(prep, **send_kwargs)
+        self._resp = resp
 
         return resp
 
