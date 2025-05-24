@@ -1,4 +1,5 @@
 from .request import Request
+from .prepared_request import PreparedRequest
 from .session import Session
 from .pending_request import PendingRequest
 from .pending_response import PendingResponse

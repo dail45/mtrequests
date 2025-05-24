@@ -1,12 +1,14 @@
 from requests import Response
 
+import mtrequests
+
 
 class PendingResponse(Response):
     def __init__(
             self,
             response: Response | None,
             exception: Exception | None,
-            pending_request: "PendingRequest",
+            pending_request: "mtrequests.PendingRequest",
             elapsed_requests: int = 1
     ):
         super().__init__()

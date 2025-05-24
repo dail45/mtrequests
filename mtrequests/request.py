@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 from typing import TYPE_CHECKING
 import requests
 
 import mtrequests
-from .lock_stub import LockStub
 
 if TYPE_CHECKING:
     from . import PendingPool, PendingRequest, PendingResponse, RequestHook
@@ -50,17 +50,17 @@ class Request(requests.Request):
         self.auth = auth
         self.cookies = cookies
 
-        self.sessionarg_send_kwargs = send_kwargs
-        self.sessionarg_proxies = proxies
-        self.sessionarg_stream = stream
-        self.sessionarg_verify = verify
-        self.sessionarg_cert = cert
+        self.session_arg_send_kwargs = send_kwargs
+        self.session_arg_proxies = proxies
+        self.session_arg_stream = stream
+        self.session_arg_verify = verify
+        self.session_arg_cert = cert
 
     def send(self, repeats=0, delay=0.1, session: "mtrequests.Session" = None, keep_cookies: bool = True) -> PendingResponse | None:
         if session is None:
             session = mtrequests.Session()
             keep_cookies = False
-        return mtrequests.PendingRequest(session, self, LockStub(), keep_cookies, None).send(repeats, delay)  # noqa
+        return mtrequests.PendingRequest(session, self, nullcontext(), keep_cookies, None).send(repeats, delay)  # noqa
 
     def wrap(self, pending_pool: PendingPool, request_hook: RequestHook = None) -> PendingRequest | None:
         return pending_pool.wrap(self, request_hook)

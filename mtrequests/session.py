@@ -1,7 +1,11 @@
 import requests
-from requests import PreparedRequest
+from requests.cookies import RequestsCookieJar, merge_cookies
+from requests.sessions import merge_setting, merge_hooks
+from requests.utils import get_netrc_auth, CaseInsensitiveDict
+from http import cookiejar as cookielib
 
 from .request import Request
+from .prepared_request import PreparedRequest
 
 
 class Session(requests.Session):
@@ -18,18 +22,53 @@ class Session(requests.Session):
         prep = self.prepare_request(request)
         self._prep = prep
 
-        proxies = request.sessionarg_proxies or {}
+        proxies = request.session_arg_proxies or {}
 
         settings = self.merge_environment_settings(
-            prep.url, proxies, request.sessionarg_stream,
-            request.sessionarg_verify, request.sessionarg_cert
+            prep.url, proxies, request.session_arg_stream,
+            request.session_arg_verify, request.session_arg_cert
         )
 
-        send_kwargs = request.sessionarg_send_kwargs
+        send_kwargs = request.session_arg_send_kwargs
         send_kwargs.update(settings)
         resp = self.send(prep, **send_kwargs)
 
         return resp
+
+    def prepare_request(self, request):
+        cookies = request.cookies or {}
+
+        if not isinstance(cookies, cookielib.CookieJar):
+            cookies = requests.sessions.cookiejar_from_dict(cookies)
+
+        # Merge with session cookies
+        merged_cookies = merge_cookies(
+            merge_cookies(RequestsCookieJar(), self.cookies), cookies
+        )
+
+        # Set environment's basic authentication if not explicitly set.
+        auth = request.auth
+        if self.trust_env and not auth and not self.auth:
+            auth = get_netrc_auth(request.url)
+
+        p = PreparedRequest()
+        p.prepare(
+            method=request.method.upper(),
+            url=request.url,
+            files=request.files,
+            data=request.data,
+            json=request.json,
+            headers=merge_setting(
+                request.headers, self.headers, dict_class=CaseInsensitiveDict
+            ),
+            params=merge_setting(request.params, self.params),
+            auth=merge_setting(auth, self.auth),
+            cookies=merged_cookies,
+            hooks=merge_hooks(request.hooks, self.hooks),
+            session=self,
+            request=request
+        )
+        return p
 
 
     @staticmethod
