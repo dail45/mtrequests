@@ -28,6 +28,7 @@ class Request(requests.Request):
             stream=None,
             verify=None,
             cert=None,
+            save_headers_position=None,
     ):
         # Default empty dicts for dict params.
         data = [] if data is None else data
@@ -55,6 +56,8 @@ class Request(requests.Request):
         self.session_arg_stream = stream
         self.session_arg_verify = verify
         self.session_arg_cert = cert
+
+        self.save_headers_position = save_headers_position
 
     def send(self, repeats=0, delay=0.1, session: "mtrequests.Session" = None, keep_cookies: bool = True) -> PendingResponse | None:
         if session is None:

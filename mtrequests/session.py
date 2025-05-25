@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import requests
 from requests.cookies import RequestsCookieJar, merge_cookies
 from requests.sessions import merge_setting, merge_hooks
@@ -23,6 +25,9 @@ class Session(requests.Session):
             self.cookies = requests.sessions.cookiejar_from_dict({})
         prep = self.prepare_request(request)
         self._prep = prep
+
+        if request.save_headers_position:
+            prep.headers = CaseInsensitiveDict(OrderedDict(request.headers.items()))
 
         proxies = request.session_arg_proxies or {}
 
@@ -92,6 +97,7 @@ class Session(requests.Session):
             verify=None,
             cert=None,
             json=None,
+            save_headers_position=None
     ) -> Request:
         send_kwargs = {
             "timeout": timeout,
@@ -113,6 +119,7 @@ class Session(requests.Session):
             stream=stream,
             verify=verify,
             cert=cert,
+            save_headers_position=save_headers_position
         )
 
     @property
