@@ -1,12 +1,13 @@
 from requests import Response
+from tls_client.response import Response as tls_response
 
-import mtrequestsold
+import mtrequests
 
 
 class PendingResponse:
     def __init__(
             self,
-            response: Response | None,
+            response: Response | tls_response | None,
             exception: Exception | None,
             pending_request: "mtrequestsold.PendingRequest",
             elapsed_requests: int = 1
@@ -46,3 +47,10 @@ class PendingResponse:
     @property
     def content(self):
         return self.response.content
+
+    @property
+    def text(self):
+        return self.response.text
+
+    def json(self, *args, **kwargs):
+        return self.response.json(*args, **kwargs)
