@@ -1,19 +1,17 @@
 from requests import Response
 
-import mtrequests
+import mtrequestsold
 
 
-class PendingResponse(Response):
+class PendingResponse:
     def __init__(
             self,
             response: Response | None,
             exception: Exception | None,
-            pending_request: "mtrequests.PendingRequest",
+            pending_request: "mtrequestsold.PendingRequest",
             elapsed_requests: int = 1
     ):
-        super().__init__()
-        if response is not None:
-            self.__dict__.update(response.__dict__)
+        self.response = response
         self.exception = exception
         self.pending_request = pending_request
         self.elapsed_requests = elapsed_requests
@@ -35,6 +33,16 @@ class PendingResponse(Response):
             if self.status_code == 200:
                 return f"<PendingResponse [{self.status_code}]>"
             return f"<PendingResponse [{self.status_code}]: {self.content}>"
-        exception_type = (f"{type(self.exception).__module__}.{type(self.exception).__name__}"
-                          if type(self.exception).__module__ else type(self.exception).__name__)
+        exception_type = (
+            f"{type(self.exception).__module__}.{type(self.exception).__name__}"
+            if type(self.exception).__module__ else type(
+                self.exception).__name__)
         return f"<PendingResponse: [{exception_type}({self.exception})]>"
+
+    @property
+    def status_code(self):
+        return self.response.status_code
+
+    @property
+    def content(self):
+        return self.response.content

@@ -1,83 +1,31 @@
+import json
 from collections import OrderedDict
 
 import requests
-from requests.cookies import RequestsCookieJar, merge_cookies
-from requests.sessions import merge_setting, merge_hooks
-from requests.utils import get_netrc_auth, CaseInsensitiveDict
-from http import cookiejar as cookielib
+import tls_client
+from requests.utils import CaseInsensitiveDict
 
 from .request import Request
-from .prepared_request import PreparedRequest
 from .pending_response import PendingResponse
 
 
-class Session(requests.Session):
-    def __init__(self):
-        super().__init__()
+class Session:
+    def __init__(self, session_class=requests.Session):
+        self.session_class: type = requests.Session
+        self.session = self.session_class()
+        self._req = None
+        self._prep = None
+        self._resp = None
+
         self.requests_count = 0
 
-        self._prep: PreparedRequest | None = None
-        self._resp: PendingResponse | None = None
+    def set_requests_session(self):
+        self.session_class = requests.Session
+        self.session = self.session_class()
 
-    def prepare_and_send(self, request: Request, keep_cookie=False) -> requests.Response:
-        self.requests_count += 1
-        if keep_cookie is False:
-            self.cookies = requests.sessions.cookiejar_from_dict({})
-        prep = self.prepare_request(request)
-        self._prep = prep
-
-        if request.save_headers_position:
-            prep.headers = CaseInsensitiveDict(OrderedDict(request.headers.items()))
-
-        proxies = request.session_arg_proxies or {}
-
-        settings = self.merge_environment_settings(
-            prep.url, proxies, request.session_arg_stream,
-            request.session_arg_verify, request.session_arg_cert
-        )
-
-        send_kwargs = request.session_arg_send_kwargs
-        send_kwargs.update(settings)
-        resp = self.send(prep, **send_kwargs)
-        self._resp = resp
-
-        return resp
-
-    def prepare_request(self, request):
-        cookies = request.cookies or {}
-
-        if not isinstance(cookies, cookielib.CookieJar):
-            cookies = requests.sessions.cookiejar_from_dict(cookies)
-
-        # Merge with session cookies
-        merged_cookies = merge_cookies(
-            merge_cookies(RequestsCookieJar(), self.cookies), cookies
-        )
-
-        # Set environment's basic authentication if not explicitly set.
-        auth = request.auth
-        if self.trust_env and not auth and not self.auth:
-            auth = get_netrc_auth(request.url)
-
-        p = PreparedRequest()
-        p.prepare(
-            method=request.method.upper(),
-            url=request.url,
-            files=request.files,
-            data=request.data,
-            json=request.json,
-            headers=merge_setting(
-                request.headers, self.headers, dict_class=CaseInsensitiveDict
-            ),
-            params=merge_setting(request.params, self.params),
-            auth=merge_setting(auth, self.auth),
-            cookies=merged_cookies,
-            hooks=merge_hooks(request.hooks, self.hooks),
-            session=self,
-            request=request
-        )
-        return p
-
+    def set_tls_client_session(self):
+        self.session_class = tls_client.Session
+        self.session = self.session_class()
 
     @staticmethod
     def make_request(
@@ -122,6 +70,68 @@ class Session(requests.Session):
             save_headers_position=save_headers_position
         )
 
-    @property
-    def prep(self):
-        return self._prep
+    def send(self, request: Request, keep_cookie=False) -> PendingResponse:
+        self.requests_count += 1
+        if request.json is not None:
+            request.data = json.dumps(request.json, separators=(",", ":"))
+            request.json = None
+        self._req = request
+        if isinstance(self.session, requests.Session):
+            if keep_cookie is False:
+                self.session.cookies = requests.sessions.cookiejar_from_dict({})
+            _request = requests.Request(
+                method=request.method,
+                url=request.url,
+                headers=request.headers,
+                files=request.files,
+                data=request.data,
+                json=request.json,
+                params=request.params,
+                auth=request.auth,
+                cookies=request.cookies,
+                hooks=request.hooks,
+            )
+            prep = self.session.prepare_request(_request)
+            if request.save_headers_position:
+                prepared_headers = prep.headers
+                prep.headers = CaseInsensitiveDict(
+                    OrderedDict(request.headers.items())
+                )
+                prep.headers.update(prepared_headers)
+
+            session_args = request.session_args
+
+            proxies = session_args.proxies or {}
+            settings = self.session.merge_environment_settings(
+                prep.url, proxies, session_args.stream,
+                session_args.verify, session_args.cert
+            )
+
+            send_kwargs = session_args.send_kwargs
+            send_kwargs.update(settings)
+
+            self._resp = self.session.send(prep, **send_kwargs)
+            return PendingResponse(self._resp, None, None, 1)
+
+        elif isinstance(self.session, tls_client.Session):
+            if keep_cookie is False:
+                self.session.cookies = requests.sessions.cookiejar_from_dict({})
+            if request.auth is not None:
+                request = request.auth(request)
+            self._resp = self.session.execute_request(
+                method=request.method,
+                url=request.url,
+                params=request.params,
+                data=request.data,
+                headers=request.headers,
+                cookies=request.cookies,
+                json=request.json,
+                allow_redirects=request.session_args.send_kwargs.get("allow_redirects", False),
+                insecure_skip_verify=request.session_args.verify,
+                timeout_seconds=request.session_args.send_kwargs.get("timeout", None),
+                proxy=request.session_args.proxies
+            )
+            return PendingResponse(self._resp, None, None, 1)
+
+    def send_all(self, *requests, keep_cookie=False):
+        return [self.send(request, keep_cookie) for request in requests]

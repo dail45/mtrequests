@@ -7,7 +7,7 @@ from .request_hook import RequestHook
 
 
 class PendingPool:
-    def __init__(self, sessions_count=1, keep_cookies=False):
+    def __init__(self, sessions_count=1, keep_cookies=False, ):
         self.sessions_count = sessions_count
         self.sessions = [Session() for _ in range(sessions_count)]
         self.locks = [Lock() for _ in range(sessions_count)]
