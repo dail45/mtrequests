@@ -75,6 +75,7 @@ class Session:
         if request.json is not None:
             request.data = json.dumps(request.json, separators=(",", ":"))
             request.json = None
+            request.headers["Content-Type"] = "application/json"
         self._req = request
         if isinstance(self.session, requests.Session):
             if keep_cookie is False:
